@@ -1,0 +1,77 @@
+<%
+
+node_hdd = @node_vars['instance_config'].fetch('net_hdd_size', @default['instance_config']['net_hdd_size'])
+node_ram = @node_vars['instance_config'].fetch('ram', @default['instance_config']['ram'])
+node_cpu = @node_vars['instance_config'].fetch('cpu', @default['instance_config']['cpu'])
+node_zone = @node_vars['instance_config'].fetch('az', @default['az'])
+
+is_create_key = @node_vars['public_key'] ? true : false
+
+-%>
+<% if is_create_key -%>
+###################################
+# Create SSH-key
+###################################
+resource "openstack_compute_keypair_v2" "terraform_key-<%= @node %>" {
+  name       = "terraform_key-<%= @node %>"
+  region     = "${var.region}"
+  public_key = "${var.public_key}"
+}
+
+<% end -%>
+###################################
+# Create Flavor
+###################################
+resource "random_string" "random_name_<%= @api %>" {
+  length  = 16
+  special = false
+}
+
+resource "openstack_compute_flavor_v2" "flavor_<%= @api %>" {
+  name      = "api.${var.domain}-${random_string.random_name_<%= @api %>.result}"
+  ram       = "<%= node_ram %>"
+  vcpus     = "<%= node_cpu %>"
+  disk      = "<%= node_hdd %>"
+  is_public = "false"
+}
+
+###################################
+# Create port
+###################################
+resource "openstack_networking_port_v2" "<%= @api %>_port_int" {
+  name       = "<%= @api %>-int"
+  network_id = "${openstack_networking_network_v2.network_int.id}"
+
+  fixed_ip {
+    subnet_id = "${openstack_networking_subnet_v2.subnet_int.id}"
+    ip_address = "<%= @node_vars['net']['int'] %>"
+  }
+}
+
+###################################
+# Create Server
+###################################
+resource "openstack_compute_instance_v2" "<%= @api %>" {
+  name              = "<%= @api %>.<%= @default['domain'] %>"
+  flavor_id         = "${openstack_compute_flavor_v2.flavor_<%= @api %>.id}"
+  key_pair          = <% if is_create_key %>"${openstack_compute_keypair_v2.terraform_key-<%= @node %>.id}"<% else %>"${openstack_compute_keypair_v2.terraform_key.id}"<% end %>
+  image_id          = "${data.openstack_images_image_v2.ubuntu_image.id}"
+  availability_zone = "<%= node_zone %>"
+
+  network {
+    port = "${openstack_networking_port_v2.<%= @api %>_port_int.id}"
+  }
+
+  metadata = {
+    x_sel_server_default_addr = "{\"ipv4\":\"${openstack_networking_port_v2.<%= @api %>_port_int.all_fixed_ips.0}\"}"
+  }
+
+  vendor_options {
+    ignore_resize_confirmation = true
+  }
+
+  lifecycle {
+    ignore_changes = ["image_id"]
+  }
+
+}

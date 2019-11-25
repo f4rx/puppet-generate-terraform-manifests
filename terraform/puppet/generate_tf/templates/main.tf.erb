@@ -1,0 +1,93 @@
+terraform {
+  required_version = "~> v0.12.0"
+  backend "local" {
+    path = "terraform/<%= @default['env'] %>/state/terraform.tfstate"
+  }
+}
+
+provider "openstack" {
+  domain_name = "${var.domain_name}"
+  tenant_id   = "${var.project_id}"
+  user_name   = "${var.user_name}"
+  password    = "${var.user_password}"
+  auth_url    = "${var.auth_url}"
+  region      = "${var.region}"
+  version = "~> 1.0"
+}
+
+###################################
+# Get image ID
+###################################
+data "openstack_images_image_v2" "ubuntu_image" {
+  most_recent = true
+  visibility  = "public"
+  name        = "Ubuntu 18.04 LTS 64-bit"
+}
+
+###################################
+# Create SSH-key
+###################################
+resource "openstack_compute_keypair_v2" "terraform_key" {
+  name       = "terraform_key"
+  region     = "${var.region}"
+  public_key = "${var.public_key}"
+}
+
+###################################
+# Create Network and Subnet
+###################################
+data "openstack_networking_network_v2" "external_net" {
+  name = "external-network"
+}
+
+resource "openstack_networking_router_v2" "router_1" {
+  name                = "router_1"
+  external_network_id = "${data.openstack_networking_network_v2.external_net.id}"
+}
+
+resource "openstack_networking_router_interface_v2" "router_interface_1" {
+  router_id = "${openstack_networking_router_v2.router_1.id}"
+  subnet_id = "${openstack_networking_subnet_v2.subnet_ext.id}"
+}
+
+resource "openstack_networking_network_v2" "network_ext" {
+  name = "network_ext"
+}
+
+resource "openstack_networking_subnet_v2" "subnet_ext" {
+  network_id      = "${openstack_networking_network_v2.network_ext.id}"
+  name            = "<%= @default['ext_net'] %>"
+  cidr            = "<%= @default['ext_net'] %>"
+  dns_nameservers = ["188.93.16.19", "188.93.17.19"]
+}
+
+resource "openstack_networking_network_v2" "network_int" {
+  name = "network_int"
+}
+
+resource "openstack_networking_subnet_v2" "subnet_int" {
+  network_id      = "${openstack_networking_network_v2.network_int.id}"
+  name            = "<%= @default['int_net'] %>"
+  cidr            = "<%= @default['int_net'] %>"
+  dns_nameservers = ["188.93.16.19", "188.93.17.19"]
+}
+
+
+###################################
+# Create floating IP
+###################################
+resource "openstack_networking_floatingip_v2" "floatingip_1" {
+  pool = "external-network"
+}
+
+###################################
+# Link floating IP to internal IP
+###################################
+resource "openstack_networking_floatingip_associate_v2" "association_1" {
+  port_id     = "${openstack_networking_port_v2.bastion_port_ext.id}"
+  floating_ip = "${openstack_networking_floatingip_v2.floatingip_1.address}"
+}
+
+output "server_external_ip" {
+  value = "${openstack_networking_floatingip_v2.floatingip_1.address}"
+}

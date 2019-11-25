@@ -1,0 +1,4 @@
+version: 5
+hierarchy:
+  - name: "Config yaml"
+    path: "nodes.%{facts.env}.yaml"

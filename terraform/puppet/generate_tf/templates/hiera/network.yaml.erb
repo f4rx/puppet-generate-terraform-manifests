@@ -1,0 +1,11 @@
+---
+ips:
+  bastion: <%= @bastion['net']['ext'] %>
+  bastion_int: <%= @bastion['net']['int'] %>
+  nodes:
+<% @api_nodes.each do | node, conf | -%>
+    <%= node %>.<%= @default['domain'] %>: <%= conf['net']['int'] %>
+<% end -%>
+<% @infra_nodes.each do | node, conf | -%>
+    <%= node %>.<%= @default['domain'] %>: <%= conf['net']['int'] %>
+<% end -%>

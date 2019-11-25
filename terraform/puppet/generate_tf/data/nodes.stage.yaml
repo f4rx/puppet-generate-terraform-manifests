@@ -1,0 +1,42 @@
+generate_tf::default:
+  env:                stage
+  region:             ru-2
+  az:                 ru-2a
+  public_key:         ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAB+wDawiHxPGPhBgTJCDUxWx+3CJHqGk15bes2q2G8zyNCfM8aj2jvNaPtedoi7cpr3o772Lrj9YajYjWouYF7OzvBwvO6h491TvzoPJX0cQQ+7XCXl3w8y8Pw/rg06kzUqSKEApBpDFHYTYvuY6RCStOykW66l70SHySD0eHLuZrxzv40LNU7ZlPvW1lE0RYRdI5LShQxOHOWBH0Wh6RWS8H3XIgoaO3AU6CVT2BnwvPJGZYwDBJEW5rYW4SkYMD7/0SoBPSpo7cuQqnhwhxA5ueQvui7b0nBo5melWUeudx009W+Y9gHts8oXkb0I99I6xl1gaPXdtusklq7J55BF9DAsr9HJNWFJFYd3guo5kMM0moU1m/IlkFLw+9FFS2nhX+tugtAPxXRp4+k8KcICN6zUaX6kulm7kM8JPyaz0C9MSPb/+MRGX73VVQM9Eut2ILftIQJ0X0/LE2/tnaj/4i+Y83QiTFiM27AzjCrxWHrdniudNjNsH6sl1uYMCzL4qx5ZpbrWvfJcBrWVrJPTA4ZP0a367fKZxJlkIgOaJxecgpRs6kZazXsQ5rZflNXTe0jA5grQDxQo+zDaC7j973cMjFs+V3znFxa6V5spP8/Dbd4oyP9PtRFeys+vnLGBpHo2rg5BIFxKh4KvzoMblFbFOQZOeQTYfTjqQ== stepanenko@selectel.ru
+  ext_net:            192.168.0.0/24
+  int_net:            192.168.10.0/24
+  domain:             ru-2.stage
+  instance_config:
+    net_hdd_size: 10
+    cpu: 1
+    ram: 1024
+
+
+generate_tf::bastion:
+  net:
+    ext: 192.168.0.4
+    int: 192.168.10.4
+  instance_config:
+    net_hdd_size: 50
+    cpu: 4
+    ram: 4096
+
+generate_tf::api_nodes:
+  api-1:
+    net:
+      int: 192.168.10.11
+    instance_config:
+      net_hdd_size: 10
+      cpu: 1
+      ram: 1024
+      az: ru-2b
+
+generate_tf::infra_nodes:
+  node-1:
+    net:
+      int: 192.168.10.21
+    instance_config: {}
+  node-2:
+    net:
+      int: 192.168.10.22
+    instance_config: {}

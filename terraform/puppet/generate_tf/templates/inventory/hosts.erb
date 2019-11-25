@@ -1,0 +1,17 @@
+[jumpbox]
+bastion ansible_host=<%= @bastion['net']['ext'] %>
+
+[nodes]
+<% @api_nodes.each do | node, conf | -%>
+<%= node -%> ansible_host=<%= conf['net']['int'] %>
+<% end -%>
+<% @infra_nodes.each do | node, conf | -%>
+<%= node -%> ansible_host=<%= conf['net']['int'] %>
+<% end -%>
+
+[nodes:vars]
+env=<%= @default['env'] %>
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+puppet_ip=<%= @bastion['net']['int'] %>

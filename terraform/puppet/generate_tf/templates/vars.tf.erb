@@ -1,0 +1,26 @@
+variable "auth_url" {
+  default = "https://api.selvpc.ru/identity/v3"
+}
+
+variable "region" {
+  default = "<%= @default['region'] %>"
+}
+variable "az_zone" {
+  default = "<%= @default['az'] %>"
+}
+variable "volume_type" {
+  default = "fast.<%= @default['az'] %>"
+}
+variable "public_key" {
+  default = "<%= @default['public_key'] %>"
+}
+
+variable "domain" {
+  default = "<%= @default['domain'] %>"
+}
+
+variable "domain_name" {}
+variable "project_id" {}
+variable "user_name" {}
+variable "user_password" {}
+
